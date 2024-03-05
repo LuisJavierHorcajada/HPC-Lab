@@ -9,7 +9,7 @@ Para el correcto funcionamiento del programa se deben cumplir estos requisitos:
 
 -   Python3
 -   Librerias opencv y numpy
--   El código fuente **kmeans_propio**
+-   El código fuente **kmeans_Propio**
 -   El archivo con los valores de cada pixel **pavia.txt**
 
 ## Guía de ejecución
@@ -30,9 +30,9 @@ El ejemplo general de cómo ejecutar el programa es *python3 kmeans_propio -k [n
 
 Algunos ejemplos:
 
--   python3 kmeans_propio -k 3
--   python3 kmeans_propio -k 2
--   python3 kmeans_propio -k 5
+-   python3 kmeans_Propio -k 3
+-   python3 kmeans_Propio -k 2
+-   python3 kmeans_Propio -k 5
 
 ## Ejecución finaliza
 
