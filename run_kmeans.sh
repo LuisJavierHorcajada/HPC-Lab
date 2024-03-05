@@ -1,1 +1,1 @@
-python3 kmeans_Propio -k 3
+python3 kmeansPropio.py -k 3
