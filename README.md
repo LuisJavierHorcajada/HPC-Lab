@@ -9,7 +9,7 @@ Para el correcto funcionamiento del programa se deben cumplir estos requisitos:
 
 -   Python3
 -   Librerias opencv y numpy
--   El código fuente **kmeans_Propio**
+-   El código fuente **kmeansPropio**
 -   El archivo con los valores de cada pixel **pavia.txt**
 
 ## Guía de ejecución
@@ -26,13 +26,13 @@ La ejecución del programa es muy sencilla, en primer lugar, vamos a explicar lo
 
 ## Ejemplos de ejecución
 
-El ejemplo general de cómo ejecutar el programa es *python3 kmeans_propio -k [número de clusters]*
+El ejemplo general de cómo ejecutar el programa es *python3 kmeansPropio -k [número de clusters]*
 
 Algunos ejemplos:
 
--   python3 kmeans_Propio -k 3
--   python3 kmeans_Propio -k 2
--   python3 kmeans_Propio -k 5
+-   python3 kmeansPropio -k 3
+-   python3 kmeansPropio -k 2
+-   python3 kmeansPropio -k 5
 
 ## Ejecución automatizada
 
