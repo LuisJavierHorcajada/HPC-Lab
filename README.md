@@ -34,6 +34,10 @@ Algunos ejemplos:
 -   python3 kmeans_Propio -k 2
 -   python3 kmeans_Propio -k 5
 
+## Ejecución automatizada
+
+Ejecutar el archivo **run_kmeans.sh**, este ejecutará de manera automática el archivo .py con k = 3
+
 ## Ejecución finaliza
 
 Se indicarán la cantidad de segundos que han sido necesitados para llevar a cabo el algorítmo kmeans con *k* clusters.
