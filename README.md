@@ -1,7 +1,7 @@
 ## Autores
 
 -   Luis Javier Horcajada Torres - [LuisJavier.Horcajada\@alu.uclm.es](mailto:LuisJavier.Horcajada@alu.uclm.es)
--   Antonio Dominguez Martin - [Antonio.Dominguez5@alu.uclm.es](mailto:Antonio.Dominguez5@alu.uclm.es)\
+-   Antonio Dominguez Martin - [Antonio.Dominguez5@alu.uclm.es](mailto:Antonio.Dominguez5@alu.uclm.es)
 
 ## Guía de instalación
 
