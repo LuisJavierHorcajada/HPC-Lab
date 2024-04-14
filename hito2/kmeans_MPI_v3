@@ -1,0 +1,151 @@
+import time
+import cv2
+import numpy as np
+import argparse
+from mpi4py import MPI
+
+def argparser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-k", "--kmeans", dest="K", type=int, required=True, help="Kmeans size")
+    parser.add_argument("-i", "--iterations", dest="I", type=int, required=True, help="Max Iterations")
+    args = parser.parse_args()
+    K = args.K
+    max_iterations = args.I
+    return K, max_iterations
+
+def kmeans(data, K, max_iterations):
+    # Se inicializan los centroides aleatoriamente eligiendo K puntos de los datos
+    indices = np.random.choice(data.shape[0], K, replace=False)
+    centroids = data[indices]
+    flag = 0
+
+    global_centroids = comm.gather(centroids, root=0)
+    if rank == 0:   
+        global_centroids = np.concatenate(global_centroids)
+        global_centroids = np.mean(global_centroids, axis=0)
+        prev_centroids = global_centroids.copy()
+
+    tolerance = 0.2
+    for i in range(max_iterations):
+        if flag == 0:
+            # Se asignan los datos a cada centroide según su distancia
+            distances = np.linalg.norm(data[:, np.newaxis] - centroids, axis=2)
+            labels = np.argmin(distances, axis=1)
+
+            # Se actualiza la posición de cada centroide en función de la cantidad de datos de cada uno
+            centroids = np.zeros((K, data.shape[1]))
+            for j in range(K):
+                cluster_points = data[labels == j]
+                if len(cluster_points) > 0:
+                    centroids[j] = np.mean(cluster_points, axis=0)
+        else:
+            break
+
+        global_centroids = comm.gather(centroids, root=0)
+
+        if rank == 0:
+            global_centroids = np.concatenate(global_centroids)
+            global_centroids = np.mean(global_centroids, axis=0)
+            if np.linalg.norm(global_centroids - prev_centroids) < tolerance or i == max_iterations - 1:
+                print("Se ha llegado a la tolerancia")
+                flag=1
+
+            prev_centroids = global_centroids.copy()
+        flag = comm.bcast(flag, root=0)
+
+    return labels, centroids
+
+def run_kmeans(data, K, max_iterations):
+    print(f'\nEmpezando kmeans con {K} clusters desde [PROCESO {rank}]')
+    start_time = time.time()
+    labels, centroids = kmeans(data, K, max_iterations)
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    return labels, centroids, execution_time
+
+
+if __name__ == "__main__":
+    FIXED_SIZE = 783640
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+    K, max_iterations = argparser()
+
+    # Leer los datos de entrada.
+    if rank == 0:
+        print(f'Ejecutando con {size} procesos')
+        # Read data from file on root process
+        data = np.loadtxt('pavia.txt', delimiter=',')
+
+        # Reshape the data into chunks matching the number of MPI processes
+        chunk_size = len(data) // size
+        scattered_data = []
+        for i in range(size):
+            if i == size - 1:
+                scattered_data.append(data[i * chunk_size :])
+            else:
+                scattered_data.append(data[i * chunk_size : (i + 1) * chunk_size])
+
+    else:
+        scattered_data = None
+        
+    data_scattered = comm.scatter(scattered_data, root=0)
+
+    # Convertir a un array NumPy
+    data_array = np.array(data_scattered)
+
+    print("Data array ", data_array.shape)
+
+    # Reorganizar los valores para adaptar a la entrada del kmeans
+    # Son 1096x715 pixeles, cada uno con 102 componentes.
+    matrix = np.reshape(data_array, (len(data_array),102))
+
+    # Los puntos de entrada para la primitiva kmeans deben ser de tipo punto flotante
+    pixels = matrix.astype(np.float32)
+
+    print("pixels array ", pixels.shape)
+
+    labels,centroids, execution_time=run_kmeans(pixels, K, max_iterations)
+
+    all_labels = comm.gather(labels, root=0)
+    all_centroids = comm.gather(centroids, root=0)
+
+    if rank == 0:
+        print(f'\nTiempo final con {K} clusters:   {str(execution_time)} segundos')
+        merged_labels = np.concatenate(all_labels)
+        merged_centroids = np.concatenate(all_centroids)
+        print("labels array ", merged_labels.shape)
+        print("centers array ", merged_centroids.shape)
+
+        # Reorganizamos las etiquetas en 715 filas y 1096 columnas.
+        cluster_map = np.reshape(merged_labels, (715, 1096)).astype(np.uint8)
+
+        # Mapa de color (B, G, R) en OpenCV
+        colors = [
+            (0, 0, 255),   # Red
+            (0, 255, 0),   # Green
+            (255, 0, 0),   # Blue
+            (255, 255, 0), # Yellow
+            (255, 0, 255), # Magenta
+            (0, 255, 255), # Cyan
+            (255, 255, 255), # White
+            (0, 0, 0),     # Black
+            (128, 128, 128), # Gray
+            (64, 64, 64)   # Gray
+        ]
+
+        color_map_array = np.array(colors)
+
+        # Asignar a cada pixel de la imagen de salida el color en función de la etiqueta
+        result_image = np.zeros((1096, 715, 3), dtype=np.uint8)
+
+        for i in range(result_image.shape[0]):
+            for j in range(result_image.shape[1]):
+                result_image[i, j] = color_map_array[cluster_map[j, i]]
+
+        # Mostrar la imagen
+        cv2.imshow('Cluster image', result_image)
+        cv2.imwrite("paviakmeanspy2.jpg", result_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
