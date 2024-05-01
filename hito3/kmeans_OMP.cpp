@@ -77,18 +77,6 @@ void readDataFromFile(const string& filename, Mat& matrix) {
     return;
 }
 
-//kmeans function
-#include <opencv2/opencv.hpp>
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <cfloat> // for FLT_MAX
-#include <cstdlib> // for rand()
-#include <omp.h>  // for OpenMP
-
-using namespace cv;
-using namespace std;
-
 int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers) {
     // Randomly initialize centers in parallel
     centers = Mat(K, data.cols, data.type());
@@ -147,7 +135,7 @@ int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers
         }
 
         // Check for convergence
-        if (norm(new_centers, centers) < 0.2) {
+        if (norm(new_centers, centers) < TOLERANCE  ) {
             break;
         }
 
@@ -158,7 +146,6 @@ int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers
 
 
 time_t run_kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers) {
-    cout << "Starting K-means with K=" << K << " and max iterations=" << max_iterations << endl;
     time_t start, end;
     int iterations = 0;
     time(&start);
