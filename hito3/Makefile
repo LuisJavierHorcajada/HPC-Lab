@@ -39,7 +39,7 @@ run_OMP:
 	./$(DIREXE)kmeans_OMP $(ARGS)
 
 run:
-	./$(DIREXE)kmeans_OMP -k 10 -i 200
+	./$(DIREXE)kmeans_OMP -k 10 -i 300
 
 clean : 
 	rm -rf *~ core $(DIROBJ) $(DIREXE)
