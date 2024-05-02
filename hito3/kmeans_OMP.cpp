@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include <ctime>
 #include <omp.h>
+#include <vector>
+#include <cmath>
+#include <cfloat>
+#include <cstdlib>
 
 using namespace std;
 using namespace cv; 
@@ -79,24 +83,22 @@ void readDataFromFile(const string& filename, Mat& matrix) {
 }
 
 int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers) {
-    // Randomly initialize centers in parallel
-    omp_set_num_threads(omp_get_max_threads());
+    // Inicializamos los centroides
     centers = Mat(K, data.cols, data.type());
-    #pragma omp parallel for schedule(static, 1) // Static scheduling for initialization
+    #pragma omp parallel for
     for (int i = 0; i < K; ++i) {
         int random_index = rand() % data.rows;
         data.row(random_index).copyTo(centers.row(i));
     }
 
-    // Initialize labels
+    // Inicializamos las etiquetas
     labels = Mat(data.rows, 1, CV_32S);
 
     // K-means algorithm
     int iteration;
-    omp_set_num_threads(omp_get_max_threads());
     for (iteration = 0; iteration < max_iterations; ++iteration) {
-        // Assign each point to the nearest center
-        #pragma omp parallel for schedule(guided, 10) // Guided scheduling for load balance
+        
+        #pragma omp parallel for // Paralelice el bucle externo
         for (int i = 0; i < data.rows; ++i) {
             float min_distance = FLT_MAX;
             int label = 0;
@@ -110,35 +112,29 @@ int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers
             labels.at<int>(i) = label;
         }
 
-        // Update centers with reduced critical section
+        // Update centers
         Mat new_centers = Mat::zeros(centers.size(), centers.type());
         vector<int> counts(K, 0);
 
-        #pragma omp parallel for schedule(dynamic, 10) // Dynamic scheduling for updating centers
+        #pragma omp parallel for
         for (int i = 0; i < data.rows; ++i) {
             int label = labels.at<int>(i);
-
-            // Use a smaller critical section to reduce overhead
-            #pragma omp atomic
-            counts[label]++;
-
-            // Use local copy to minimize critical section
+            #pragma omp critical
             {
-                Mat row_copy;
-                data.row(i).copyTo(row_copy); // Local copy
-                new_centers.row(label) += row_copy;
+                new_centers.row(label) += data.row(i); // Critical para evitar condiciones de carrera
+                counts[label]++;
             }
         }
 
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for
         for (int i = 0; i < K; ++i) {
             if (counts[i] > 0) {
                 new_centers.row(i) /= counts[i];
             }
         }
 
-        // Check for convergence
-        if (norm(new_centers, centers) < TOLERANCE  ) {
+        // Comprobamos la convergencia
+        if (norm(new_centers, centers) < TOLERANCE) {
             break;
         }
 
