@@ -12,6 +12,7 @@ using namespace cv;
 
 #define TOLERANCE 0.2
 
+
 // Argument parser function
 pair<int, int> argparser(int argc, char* argv[]) {
     int K = -1;
@@ -79,8 +80,9 @@ void readDataFromFile(const string& filename, Mat& matrix) {
 
 int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers) {
     // Randomly initialize centers in parallel
+    omp_set_num_threads(omp_get_max_threads());
     centers = Mat(K, data.cols, data.type());
-    #pragma omp parallel for schedule(static) // Static scheduling for initialization
+    #pragma omp parallel for schedule(static, 1) // Static scheduling for initialization
     for (int i = 0; i < K; ++i) {
         int random_index = rand() % data.rows;
         data.row(random_index).copyTo(centers.row(i));
@@ -91,6 +93,7 @@ int kmeans(const Mat& data, int K, int max_iterations, Mat& labels, Mat& centers
 
     // K-means algorithm
     int iteration;
+    omp_set_num_threads(omp_get_max_threads());
     for (iteration = 0; iteration < max_iterations; ++iteration) {
         // Assign each point to the nearest center
         #pragma omp parallel for schedule(guided, 10) // Guided scheduling for load balance
