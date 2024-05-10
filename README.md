@@ -19,6 +19,8 @@ Para el correcto funcionamiento del programa se deben cumplir estos requisitos:
 -   Librerias opencv y numpy
 -   El código fuente **kmeansPropio**
 -   El archivo con los valores de cada pixel **pavia.txt**
+    -   Se puede descargar aquí: [pavia.txt](https://drive.google.com/file/d/1XkSp7vMsTrp9aTY40RtZhVqdZPMyguwM/view)
+
 
 ### Guía de ejecución
 
